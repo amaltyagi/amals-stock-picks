@@ -1,7 +1,13 @@
 document.addEventListener("DOMContentLoaded", async () => {
   // Fetch data from the CSV file using PHP
   const response = await fetch("data.php");
-  const data = await response.json();
+  let data = await response.json();
+
+  // Convert date strings to Date objects and sort data by date in ascending order
+  data.forEach(row => {
+    row[1] = new Date(row[1]);
+  });
+  data.sort((a, b) => a[1] - b[1]);
 
   // Create a set of unique sector names
   const sectorsSet = new Set(data.map(item => item[0]));
@@ -18,6 +24,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const datasets = [];
 
   let previouslyIsolatedSector = null;
+
+  // Function to calculate transparency based on Start date
+  const getTransparency = (startDate) => {
+    const timeDiff = Date.now() - new Date(startDate);
+    const daysDiff = timeDiff / (1000 * 60 * 60 * 24); // Milliseconds to days conversion
+    const maxDaysDiff = 365; // Adjust this value based on your preference
+    const transparency = 1.1 - (daysDiff / maxDaysDiff);
+    return Math.max(0, Math.min(1.1, transparency));
+  };
 
   sectors.forEach((sector) => {
     const sectorData = data.filter(item => item[0] === sector);
@@ -36,21 +51,45 @@ document.addEventListener("DOMContentLoaded", async () => {
         lineTension: 0,
         hidden: false, // Show all datasets initially
         ticker: ticker,
+        startDate: row[1].toLocaleDateString() // Store the "Start" date for the row
       });
     });
   });
+
+  // Function to update tooltip font size based on browser width
+  const updateTooltipFontSize = () => {
+    const width = window.innerWidth;
+    const baseFontSize = 12; // Default base font size
+    const maxFontSize = 20; // Maximum font size you want to apply
+    const breakpointWidth = 768; // Adjust this value based on your desired breakpoint
+
+    // Calculate the new font size based on the browser width
+    const fontSize = Math.min(baseFontSize + (width - breakpointWidth) / 50, maxFontSize);
+
+    // Apply the new font size to the tooltip content
+    const tooltips = document.querySelectorAll(".custom-tooltip");
+    tooltips.forEach((tooltip) => {
+      tooltip.style.fontSize = `${fontSize}px`;
+    });
+  };
+
+  // Call the function initially to set the font size based on the initial browser width
+  updateTooltipFontSize();
+
+  // Add a listener to update the font size when the browser width changes
+  window.addEventListener("resize", updateTooltipFontSize);
 
   // Function to get the tooltip label
   const getTooltipLabel = (context) => {
     const labelParts = context.dataset.label.split(" - ");
     const sector = labelParts[0];
     const ticker = context.dataset.ticker;
-    const date = `Date: ${data[context.dataIndex][1]}`; // Use the 2nd column (dates) from the CSV
+    const startDate = `Start: ${context.dataset.startDate}`; // Use the "Start" date for the row
     const price = context.raw;
     return [
       `Sector: ${sector}`,
       `Ticker: ${ticker}`,
-      date,
+      startDate,
       `Price: ${price.toFixed(2)}%`,
     ];
   };
@@ -61,7 +100,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     type: "line",
     data: {
       labels: labels,
-      datasets: datasets,
+      datasets: datasets.map(dataset => {
+        // Get the transparency value based on the Start date for each dataset
+        const transparency = getTransparency(dataset.startDate);
+        // Convert the RGB color to RGBA with the calculated transparency
+        const borderColor = dataset.borderColor.replace('hsl', 'hsla').replace(')', `, ${transparency})`);
+        return {
+          ...dataset,
+          borderColor: borderColor,
+        };
+      }),
     },
     options: {
       responsive: true,
@@ -71,15 +119,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           position: "bottom",
           suggestedMin: 1,
           suggestedMax: 44,
+          ticks: {
+            stepSize: 1,
+          },
         },
         y: {
           min: -30,
           suggestedMax: 30,
         },
-      },
-      interaction: {
-        mode: "index",
-        intersect: false,
       },
       plugins: {
         legend: {
@@ -95,14 +142,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (!usedLabels.has(label)) {
                   legendItems.push({
                     text: label,
-                    fillStyle: dataset.borderColor,
+                    fillStyle: sectorColors[label], // Use the original color without transparency
                     hidden: dataset.hidden,
                     lineCap: "butt",
                     lineDash: [],
                     lineDashOffset: 0,
                     lineJoin: "miter",
                     lineWidth: 3,
-                    strokeStyle: dataset.borderColor,
+                    strokeStyle: sectorColors[label], // Use the original color without transparency
                   });
                   usedLabels.add(label);
                 }
@@ -141,6 +188,18 @@ document.addEventListener("DOMContentLoaded", async () => {
           intersect: false,
           callbacks: {
             label: (context) => getTooltipLabel(context),
+          },
+        },
+        annotation: {
+          annotations: {
+            zeroLine: {
+              type: "line",
+              yMin: 0,
+              yMax: 0,
+              borderColor: "black",
+              borderWidth: 3,
+              borderDash: [10, 5], // Set the line to be dotted (5px on, 5px off)
+            },
           },
         },
       },
