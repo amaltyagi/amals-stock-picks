@@ -56,29 +56,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Function to update tooltip font size based on browser width
-  const updateTooltipFontSize = () => {
-    const width = window.innerWidth;
-    const baseFontSize = 12; // Default base font size
-    const maxFontSize = 20; // Maximum font size you want to apply
-    const breakpointWidth = 768; // Adjust this value based on your desired breakpoint
-
-    // Calculate the new font size based on the browser width
-    const fontSize = Math.min(baseFontSize + (width - breakpointWidth) / 50, maxFontSize);
-
-    // Apply the new font size to the tooltip content
-    const tooltips = document.querySelectorAll(".custom-tooltip");
-    tooltips.forEach((tooltip) => {
-      tooltip.style.fontSize = `${fontSize}px`;
-    });
-  };
-
-  // Call the function initially to set the font size based on the initial browser width
-  updateTooltipFontSize();
-
-  // Add a listener to update the font size when the browser width changes
-  window.addEventListener("resize", updateTooltipFontSize);
-
   // Function to get the tooltip label
   const getTooltipLabel = (context) => {
     const labelParts = context.dataset.label.split(" - ");
@@ -108,6 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return {
           ...dataset,
           borderColor: borderColor,
+          pointHitRadius: 0, // Disable clicking on points
         };
       }),
     },
@@ -202,32 +180,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             },
           },
         },
-      },
-      onClick: (event, elements) => {
-        if (!elements || elements.length === 0) {
-          // No element clicked, reset visibility of all datasets
-          chart.data.datasets.forEach((dataset) => {
-            dataset.hidden = false;
-          });
-          previouslyIsolatedSector = null;
-        } else {
-          // Toggle visibility of datasets based on the clicked element
-          const clickedDataset = chart.data.datasets[elements[0].datasetIndex];
-          const sector = clickedDataset.label;
-          chart.data.datasets.forEach((dataset) => {
-            const datasetSector = dataset.label;
-            if (datasetSector === sector) {
-              // Toggle the visibility of the clicked sector
-              dataset.hidden = !dataset.hidden;
-            } else {
-              dataset.hidden = true; // Hide other sectors
-            }
-          });
-          previouslyIsolatedSector = sector;
-        }
-
-        // Update the chart to reflect the changes
-        chart.update();
       },
     },
   });
