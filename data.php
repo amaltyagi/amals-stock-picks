@@ -1,6 +1,6 @@
 <?php
 // Read the CSV file without header
-$csvFile = 'barrons-picks.csv';
+$csvFile = 'barrons-picks-pans-extended-weekly.csv';
 $csvData = array_map('str_getcsv', file($csvFile));
 
 // Remove 'nan' values from the sector column
