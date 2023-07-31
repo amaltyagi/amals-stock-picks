@@ -30,8 +30,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const timeDiff = Date.now() - new Date(startDate);
     const daysDiff = timeDiff / (1000 * 60 * 60 * 24); // Milliseconds to days conversion
     const maxDaysDiff = 365; // Adjust this value based on your preference
-    const transparency = 1.1 - (daysDiff / maxDaysDiff);
-    return Math.max(0, Math.min(1.1, transparency));
+    const transparency = 3.5 - (daysDiff / maxDaysDiff);
+    return Math.max(0, Math.min(3.5, transparency));
   };
 
   sectors.forEach((sector) => {
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const labelParts = context.dataset.label.split(" - ");
     const sector = labelParts[0];
     const ticker = context.dataset.ticker;
-    const startDate = `Start: ${context.dataset.startDate}`; // Use the "Start" date for the row
+    const startDate = `Recommended: ${context.dataset.startDate}`; // Use the "Start" date for the row
     const price = context.raw;
     return [
       `Sector: ${sector}`,
@@ -100,10 +100,26 @@ document.addEventListener("DOMContentLoaded", async () => {
           ticks: {
             stepSize: 1,
           },
+          title: {
+            display: true,
+            text: 'Time Since Recommendation (wks)', 
+            color: '#000',
+            font: {
+              size: 16
+            }
+          }
         },
         y: {
-          min: -30,
-          suggestedMax: 30,
+          suggestedMin: -100,
+          suggestedMax: 150,
+          title: {
+            display: true,
+            text: 'Price Change (%)',  // Title for Y-axis
+            color: '#000',
+            font: {
+              size: 16
+            }
+          }
         },
       },
       plugins: {
