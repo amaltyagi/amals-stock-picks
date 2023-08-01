@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         },
         y: {
           min: -100,
-          max: 100,
+          max: 150,
           title: {
             display: true,
             text: 'Price Change (%)',  // Title for Y-axis
